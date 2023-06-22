@@ -17,20 +17,21 @@
 #include <BlynkSimpleEsp8266.h>
 
 /* DS18B20 Termometer includes */
-//#include <OneWire.h>
-//#include <DallasTemperature.h>
-
-//#define WT_PIN 7
-
-//OneWire oneWire(WT_PIN);
-
-// Pass our oneWire reference to Dallas Temperature. 
-//DallasTemperature sensors(&oneWire);
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
 char ssid[] = "sandstrasse";
 char pass[] = "derpar0l";
+
+#define WT_PIN 2
+#define reley_pin 4
+
+OneWire oneWire(WT_PIN);
+
+// Pass our oneWire reference to Dallas Temperature. 
+DallasTemperature sensors(&oneWire);
 
 BlynkTimer timer;
 
@@ -40,6 +41,15 @@ BLYNK_WRITE(V0){
   int value = param.asInt();
   // Update state
   Blynk.virtualWrite(V5, value);
+}
+
+BLYNK_WRITE(V9){
+  int value = param.asInt();
+  if (value == 0) {
+    digitalWrite(reley_pin, HIGH);
+  } else {
+    digitalWrite(reley_pin, LOW);
+  }
 }
 
 // This function is called every time the device is connected to the Blynk.Cloud
@@ -54,19 +64,25 @@ BLYNK_CONNECTED(){
 void myTimerEvent(){
   // You can send any value at any time.
   // Please don't send more that 10 values per second.
+  
+  sensors.requestTemperatures();
+  float tempW = sensors.getTempCByIndex(0);
+  if (tempW != DEVICE_DISCONNECTED_C) {
+    Serial.print(tempW);
+    Serial.println(" C");
+    Blynk.virtualWrite(V7, tempW);
+  } else {
+    Serial.println("Error: Could not read temperature data");
+  }
   Blynk.virtualWrite(V2, millis() / 1000);
-//  sensors.requestTemperatures();
-//  float temp = sensors.getTempCByIndex(0);
-//  Serial.print(temp);
-//  Serial.println(" C");
-//  Blynk.virtualWrite(V7, temp);
 }
 
 void setup(){
   // Debug console
   Serial.begin(115200);
-//  sensors.begin();
+  pinMode(reley_pin, OUTPUT);
   Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+  sensors.begin();
   // You can also specify server:
   //Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass, "blynk.cloud", 80);
   //Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass, IPAddress(192,168,1,100), 8080);
