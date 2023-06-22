@@ -5,9 +5,9 @@
  *************************************************************/
 
 /* Fill-in information from Blynk Device Info here */
-#define BLYNK_TEMPLATE_ID           "TMPL4z5fh3OQ4"
-#define BLYNK_TEMPLATE_NAME         "Quickstart Template"
-#define BLYNK_AUTH_TOKEN            "1GXDzFnEc88ECQ2SlKDXz4tJa8LVMH3G"
+#define BLYNK_TEMPLATE_ID           "[your Blynk template id]"
+#define BLYNK_TEMPLATE_NAME         "[template name]"
+#define BLYNK_AUTH_TOKEN            "[Blynk auth token]"
 
 /* Comment this out to disable prints and save space */
 #define BLYNK_PRINT Serial
@@ -22,8 +22,8 @@
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
-char ssid[] = "sandstrasse";
-char pass[] = "derpar0l";
+char ssid[] = "[network name]";
+char pass[] = "[network password]";
 
 #define WT_PIN 2
 #define reley_pin 4
