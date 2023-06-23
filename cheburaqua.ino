@@ -4,6 +4,17 @@
   Be sure to check out other examples!
  *************************************************************/
 
+/** DATASTREAMS
+ V0: Fan
+ V2: Timer
+ V4: Nighttime light
+ V5: Filter
+ V6: Heating
+ V7: Water temperature
+ V8: Air temperature
+ V9: Daylight
+*/
+
 /* Fill-in information from Blynk Device Info here */
 #define BLYNK_TEMPLATE_ID           "[your Blynk template id]"
 #define BLYNK_TEMPLATE_NAME         "[template name]"
@@ -25,52 +36,82 @@
 char ssid[] = "[network name]";
 char pass[] = "[network password]";
 
-#define WT_PIN 2
-#define reley_pin 4
+/** Labels to pins mapping
+  D4: pin 2
+  D2: pin 4
+  D1: pin 5
+  D5: pin 14
+  D6: pin 12
+  D7: pin 13
+  
+*/
 
-OneWire oneWire(WT_PIN);
+#define TEMP_PIN 2
+#define reley_daylight_pin 4
+#define relay_nightlight_pin 5
+#define relay_fan_pin 14
+#define relay_heating_pin 12
+//#define relay_filter_pin 13
+
+OneWire oneWire(TEMP_PIN);
 
 // Pass our oneWire reference to Dallas Temperature. 
 DallasTemperature sensors(&oneWire);
 
 BlynkTimer timer;
 
-// This function is called every time the Virtual Pin 0 state changes
-BLYNK_WRITE(V0){
-  // Set incoming value from pin V0 to a variable
-  int value = param.asInt();
-  // Update state
-  Blynk.virtualWrite(V5, value);
-}
-
-BLYNK_WRITE(V9){
-  int value = param.asInt();
+void SwitchRelay(int value, int relay) {
   if (value == 0) {
-    digitalWrite(reley_pin, HIGH);
+    digitalWrite(relay, HIGH);
   } else {
-    digitalWrite(reley_pin, LOW);
+    digitalWrite(relay, LOW);
   }
 }
 
 // This function is called every time the device is connected to the Blynk.Cloud
 BLYNK_CONNECTED(){
-  // Change Web Link Button message to "Congratulations!"
-  //  Blynk.setProperty(V3, "offImageUrl", "https://static-image.nyc3.cdn.digitaloceanspaces.com/general/fte/congratulations.png");
-  //  Blynk.setProperty(V3, "onImageUrl",  "https://static-image.nyc3.cdn.digitaloceanspaces.com/general/fte/congratulations_pressed.png");
-  //  Blynk.setProperty(V3, "url", "https://docs.blynk.io/en/getting-started/what-do-i-need-to-blynk/how-quickstart-device-was-made");
+  Blynk.syncVirtual(V0, V4, V9);
 }
 
-// This function sends Arduino's uptime every second to Virtual Pin 2.
+// V9 - Daylight datastrem
+BLYNK_WRITE(V9){
+  int value = param.asInt();
+  SwitchRelay(value, reley_daylight_pin);
+}
+// V4 - Hightlight datastrem
+BLYNK_WRITE(V4) {
+  int value = param.asInt();
+  SwitchRelay(value, relay_nightlight_pin);
+}
+// V0 - Fan datastrem
+BLYNK_WRITE(V0) {
+  int value = param.asInt();
+  SwitchRelay(value, relay_fan_pin);
+}
+// V6 - Heating datastrem
+BLYNK_WRITE(V6) {
+  int value = param.asInt();
+  SwitchRelay(value, relay_heating_pin);
+}
+
+// This function is being called every secont and:
+// 1. Sends Arduino's uptime to Virtual Pin 2.
+// 2. Sends water temperature to Virtual Pin 7.
+// 3. Sends air temperature to Virtual Pin 8.
 void myTimerEvent(){
   // You can send any value at any time.
   // Please don't send more that 10 values per second.
   
   sensors.requestTemperatures();
   float tempW = sensors.getTempCByIndex(0);
-  if (tempW != DEVICE_DISCONNECTED_C) {
+  float tempA = sensors.getTempCByIndex(1);
+  if (tempW != DEVICE_DISCONNECTED_C && tempA != DEVICE_DISCONNECTED_C) {
     Serial.print(tempW);
     Serial.println(" C");
     Blynk.virtualWrite(V7, tempW);
+    Serial.print(tempA);
+    Serial.println(" C");
+    Blynk.virtualWrite(V8, tempA);
   } else {
     Serial.println("Error: Could not read temperature data");
   }
@@ -80,7 +121,11 @@ void myTimerEvent(){
 void setup(){
   // Debug console
   Serial.begin(115200);
-  pinMode(reley_pin, OUTPUT);
+  pinMode(reley_daylight_pin, OUTPUT);
+  pinMode(relay_nightlight_pin, OUTPUT);
+  pinMode(relay_fan_pin, OUTPUT);
+  pinMode(relay_heating_pin, OUTPUT);
+
   Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
   sensors.begin();
   // You can also specify server:
@@ -94,7 +139,5 @@ void setup(){
 void loop(){
   Blynk.run();
   timer.run();
-  // You can inject your own code or combine it with other sketches.
-  // Check other examples on how to communicate with Blynk. Remember
-  // to avoid delay() function!
+  // Remember to avoid delay() function!
 }
