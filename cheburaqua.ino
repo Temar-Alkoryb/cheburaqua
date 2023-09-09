@@ -117,10 +117,12 @@ void myTimerEvent(){
   if (tempW != DEVICE_DISCONNECTED_C && tempA != DEVICE_DISCONNECTED_C) {
     Serial.print(tempW);
     Serial.println(" C");
-    Blynk.virtualWrite(V7, tempW);
     Serial.print(tempA);
     Serial.println(" C");
+    Blynk.beginGroup();
+    Blynk.virtualWrite(V7, tempW);
     Blynk.virtualWrite(V8, tempA);
+    Blynk.endGroup();
   } else {
     Serial.println("Error: Could not read temperature data");
   }
