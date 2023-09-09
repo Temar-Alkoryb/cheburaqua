@@ -16,9 +16,9 @@
 */
 
 /* Fill-in information from Blynk Device Info here */
-#define BLYNK_TEMPLATE_ID           "[your Blynk template id]"
-#define BLYNK_TEMPLATE_NAME         "[template name]"
-#define BLYNK_AUTH_TOKEN            "[Blynk auth token]"
+#define BLYNK_TEMPLATE_ID           "TMPL4z5fh3OQ4"
+#define BLYNK_TEMPLATE_NAME         "Cheburaqua Template"
+#define BLYNK_AUTH_TOKEN            "1GXDzFnEc88ECQ2SlKDXz4tJa8LVMH3G"
 
 /* Comment this out to disable prints and save space */
 #define BLYNK_PRINT Serial
@@ -33,8 +33,8 @@
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
-char ssid[] = "[network name]";
-char pass[] = "[network password]";
+char ssid[] = "sandstrasse";
+char pass[] = "derpar0l";
 
 /** Labels to pins mapping
   D4: pin 2
@@ -54,6 +54,11 @@ char pass[] = "[network password]";
 //#define relay_filter_pin 13
 
 OneWire oneWire(TEMP_PIN);
+
+// is fan active
+int fanState = 0;
+int fanWorkingTime = 0;
+int fanWaitingTime = 0;
 
 // Pass our oneWire reference to Dallas Temperature. 
 DallasTemperature sensors(&oneWire);
@@ -93,6 +98,10 @@ BLYNK_WRITE(V6) {
   int value = param.asInt();
   SwitchRelay(value, relay_heating_pin);
 }
+// V2 - timer datastream
+BLYNK_WRITE(V2) {
+  int value = param.asInt();
+}
 
 // This function is being called every secont and:
 // 1. Sends Arduino's uptime to Virtual Pin 2.
@@ -116,6 +125,26 @@ void myTimerEvent(){
     Serial.println("Error: Could not read temperature data");
   }
   Blynk.virtualWrite(V2, millis() / 1000);
+
+  if (fanState == 0) {
+    if (fanWaitingTime < 60) {
+      fanWaitingTime += 1;
+    } else {
+      Blynk.virtualWrite(V0, 1);
+      SwitchRelay(1, relay_fan_pin);
+      fanWaitingTime = 0;
+      fanState = 1;
+    }
+  } else {
+    if (fanWorkingTime < 10) {
+      fanWorkingTime += 1;
+    } else {
+      Blynk.virtualWrite(V0, 0);
+      SwitchRelay(0, relay_fan_pin);
+      fanWorkingTime = 0;
+      fanState = 0;
+    }
+  }
 }
 
 void setup(){
