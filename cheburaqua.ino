@@ -6,7 +6,7 @@
 
 /** DATASTREAMS
  V0: Fan
- V2: Timer
+ V2: Timer ??
  V4: Nighttime light
  V5: Filter
  V6: Heating
@@ -16,9 +16,9 @@
 */
 
 /* Fill-in information from Blynk Device Info here */
-#define BLYNK_TEMPLATE_ID           "TMPL4z5fh3OQ4"
-#define BLYNK_TEMPLATE_NAME         "Cheburaqua Template"
-#define BLYNK_AUTH_TOKEN            "1GXDzFnEc88ECQ2SlKDXz4tJa8LVMH3G"
+#define BLYNK_TEMPLATE_ID           ""
+#define BLYNK_TEMPLATE_NAME         ""
+#define BLYNK_AUTH_TOKEN            ""
 
 /* Comment this out to disable prints and save space */
 #define BLYNK_PRINT Serial
@@ -33,8 +33,8 @@
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
-char ssid[] = "sandstrasse";
-char pass[] = "derpar0l";
+char ssid[] = "";
+char pass[] = "";
 
 /** Labels to pins mapping
   D4: pin 2
@@ -103,31 +103,7 @@ BLYNK_WRITE(V2) {
   int value = param.asInt();
 }
 
-// This function is being called every secont and:
-// 1. Sends Arduino's uptime to Virtual Pin 2.
-// 2. Sends water temperature to Virtual Pin 7.
-// 3. Sends air temperature to Virtual Pin 8.
-void myTimerEvent(){
-  // You can send any value at any time.
-  // Please don't send more that 10 values per second.
-  
-  sensors.requestTemperatures();
-  float tempW = sensors.getTempCByIndex(0);
-  float tempA = sensors.getTempCByIndex(1);
-  if (tempW != DEVICE_DISCONNECTED_C && tempA != DEVICE_DISCONNECTED_C) {
-    Serial.print(tempW);
-    Serial.println(" C");
-    Serial.print(tempA);
-    Serial.println(" C");
-    Blynk.beginGroup();
-    Blynk.virtualWrite(V7, tempW);
-    Blynk.virtualWrite(V8, tempA);
-    Blynk.endGroup();
-  } else {
-    Serial.println("Error: Could not read temperature data");
-  }
-  Blynk.virtualWrite(V2, millis() / 1000);
-
+void checkFan() {
   if (fanState == 0) {
     if (fanWaitingTime < 60) {
       fanWaitingTime += 1;
@@ -149,6 +125,29 @@ void myTimerEvent(){
   }
 }
 
+// This function is being called every secont and:
+// 1. Sends Arduino's uptime to Virtual Pin 2.
+// 2. Sends water temperature to Virtual Pin 7.
+// 3. Sends air temperature to Virtual Pin 8.
+void myTimerEvent(){
+  // You can send any value at any time.
+  // Please don't send more that 10 values per second.
+  
+  sensors.requestTemperatures();
+  float tempW = sensors.getTempCByIndex(0);
+  float tempA = sensors.getTempCByIndex(1);
+  if (tempW != DEVICE_DISCONNECTED_C && tempA != DEVICE_DISCONNECTED_C) {
+    Blynk.beginGroup();
+    Blynk.virtualWrite(V7, tempW);
+    Blynk.virtualWrite(V8, tempA);
+    Blynk.endGroup();
+  } else {
+    Serial.println("Error: Could not read temperature data");
+  }
+  Blynk.virtualWrite(V2, millis() / 1000);
+  checkFan();
+}
+
 void setup(){
   // Debug console
   Serial.begin(115200);
@@ -156,6 +155,7 @@ void setup(){
   pinMode(relay_nightlight_pin, OUTPUT);
   pinMode(relay_fan_pin, OUTPUT);
   pinMode(relay_heating_pin, OUTPUT);
+  // pinMode(relay_filter_pin, OUTPUT);
 
   Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
   sensors.begin();
